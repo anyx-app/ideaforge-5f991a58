@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  DashboardContainer, 
-  DashboardSection, 
-  DashboardHeader 
+import {
+  DashboardContainer,
+  DashboardSection,
+  DashboardHeader
 } from '@/components/recipes/layouts';
 import { StatGrid } from '@/components/recipes/dashboard/StatCard';
 import { SearchBar } from '@/components/recipes/filters/SearchBar';
@@ -18,23 +18,23 @@ const MOCK_STATS = [
   {
     title: "Total Ideas",
     value: "12",
-    change: "+2 this month",
-    trend: "up" as const,
-    icon: <Lightbulb className="h-4 w-4" />,
+    change: { value: 20, label: "this month", isPositive: true },
+    trend: [8, 9, 10, 9, 11, 10, 12], // Trend data points
+    icon: Lightbulb,
   },
   {
     title: "Validated",
     value: "4",
-    change: "33% success rate",
-    trend: "up" as const,
-    icon: <CheckCircle className="h-4 w-4" />,
+    change: { value: 33, label: "success rate", isPositive: true },
+    trend: [2, 2, 3, 3, 3, 4, 4], // Trend data points
+    icon: CheckCircle,
   },
   {
     title: "Avg. Score",
     value: "72/100",
-    change: "+5.2 points",
-    trend: "up" as const,
-    icon: <TrendingUp className="h-4 w-4" />,
+    change: { value: 5.2, label: "points", isPositive: true },
+    trend: [65, 67, 68, 70, 69, 71, 72], // Trend data points
+    icon: TrendingUp,
   },
 ];
 
@@ -90,7 +90,7 @@ const MyIdeas = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredIdeas = MOCK_IDEAS.filter(idea => 
+  const filteredIdeas = MOCK_IDEAS.filter(idea =>
     idea.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     idea.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -104,23 +104,19 @@ const MyIdeas = () => {
     }
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'bg-green-500';
-    if (score >= 60) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
 
   return (
     <DashboardContainer>
-      <DashboardHeader 
-        title="My Ideas" 
-        description="Manage and track your startup ideas and their validation progress."
-      >
-        <Button onClick={() => navigate('/new-idea')}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Idea
-        </Button>
-      </DashboardHeader>
+      <DashboardHeader
+        title="My Ideas"
+        subtitle="Manage and track your startup ideas and their validation progress."
+        actions={
+          <Button onClick={() => navigate('/new-idea')}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Idea
+          </Button>
+        }
+      />
 
       <DashboardSection>
         <StatGrid stats={MOCK_STATS} columns={3} />
@@ -128,9 +124,9 @@ const MyIdeas = () => {
 
       <DashboardSection title="Your Ideas" description={`${filteredIdeas.length} ideas found`}>
         <div className="mb-6">
-          <SearchBar 
-            onSearch={setSearchQuery} 
-            placeholder="Search ideas by title or description..." 
+          <SearchBar
+            onSearch={setSearchQuery}
+            placeholder="Search ideas by title or description..."
           />
         </div>
 
@@ -156,7 +152,7 @@ const MyIdeas = () => {
                       <span className="text-muted-foreground">Validation Score</span>
                       <span className="font-medium">{idea.score}/100</span>
                     </div>
-                    <Progress value={idea.score} className="h-2" indicatorClassName={getScoreColor(idea.score)} />
+                    <Progress value={idea.score} className="h-2" />
                   </div>
                   <div className="flex justify-between text-sm border-t pt-4">
                     <span className="text-muted-foreground">Market Size</span>
