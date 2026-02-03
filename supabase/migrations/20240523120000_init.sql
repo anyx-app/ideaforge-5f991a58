@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION current_user_id() RETURNS text AS $$
 $$ LANGUAGE sql STABLE;
 
 -- 1. profiles
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL, -- Links to auth.users implicitly
     full_name TEXT,
@@ -18,10 +18,10 @@ CREATE TABLE profiles (
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
-CREATE INDEX idx_profiles_user_id ON profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON profiles(user_id);
 
 -- 2. ideas
-CREATE TABLE ideas (
+CREATE TABLE IF NOT EXISTS ideas (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL, -- Owner
     title TEXT NOT NULL,
@@ -31,10 +31,10 @@ CREATE TABLE ideas (
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
-CREATE INDEX idx_ideas_user_id ON ideas(user_id);
+CREATE INDEX IF NOT EXISTS idx_ideas_user_id ON ideas(user_id);
 
 -- 3. analyses
-CREATE TABLE analyses (
+CREATE TABLE IF NOT EXISTS analyses (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     idea_id UUID NOT NULL REFERENCES ideas(id) ON DELETE CASCADE,
     status TEXT NOT NULL DEFAULT 'pending',
@@ -47,7 +47,7 @@ CREATE TABLE analyses (
 );
 
 -- 4. competitors
-CREATE TABLE competitors (
+CREATE TABLE IF NOT EXISTS competitors (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     analysis_id UUID NOT NULL REFERENCES analyses(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -58,7 +58,7 @@ CREATE TABLE competitors (
 );
 
 -- 5. validation_metrics
-CREATE TABLE validation_metrics (
+CREATE TABLE IF NOT EXISTS validation_metrics (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     analysis_id UUID NOT NULL REFERENCES analyses(id) ON DELETE CASCADE,
     category TEXT NOT NULL,
@@ -76,30 +76,38 @@ ALTER TABLE validation_metrics ENABLE ROW LEVEL SECURITY;
 -- Policies
 
 -- Profiles
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
 CREATE POLICY "Users can view own profile" ON profiles
     FOR SELECT USING (user_id::text = current_user_id());
 
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile" ON profiles
     FOR UPDATE USING (user_id::text = current_user_id());
     
+DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
 CREATE POLICY "Users can insert own profile" ON profiles
     FOR INSERT WITH CHECK (user_id::text = current_user_id());
 
 -- Ideas
+DROP POLICY IF EXISTS "Users can view own ideas" ON ideas;
 CREATE POLICY "Users can view own ideas" ON ideas
     FOR SELECT USING (user_id::text = current_user_id());
 
+DROP POLICY IF EXISTS "Users can insert own ideas" ON ideas;
 CREATE POLICY "Users can insert own ideas" ON ideas
     FOR INSERT WITH CHECK (user_id::text = current_user_id());
 
+DROP POLICY IF EXISTS "Users can update own ideas" ON ideas;
 CREATE POLICY "Users can update own ideas" ON ideas
     FOR UPDATE USING (user_id::text = current_user_id());
 
+DROP POLICY IF EXISTS "Users can delete own ideas" ON ideas;
 CREATE POLICY "Users can delete own ideas" ON ideas
     FOR DELETE USING (user_id::text = current_user_id());
 
 -- Analyses
 -- Users can view analyses linked to their ideas
+DROP POLICY IF EXISTS "Users can view analyses of own ideas" ON analyses;
 CREATE POLICY "Users can view analyses of own ideas" ON analyses
     FOR SELECT USING (
         EXISTS (
@@ -110,6 +118,7 @@ CREATE POLICY "Users can view analyses of own ideas" ON analyses
     );
 
 -- Competitors
+DROP POLICY IF EXISTS "Users can view competitors of own ideas" ON competitors;
 CREATE POLICY "Users can view competitors of own ideas" ON competitors
     FOR SELECT USING (
         EXISTS (
@@ -121,6 +130,7 @@ CREATE POLICY "Users can view competitors of own ideas" ON competitors
     );
 
 -- Validation Metrics
+DROP POLICY IF EXISTS "Users can view metrics of own ideas" ON validation_metrics;
 CREATE POLICY "Users can view metrics of own ideas" ON validation_metrics
     FOR SELECT USING (
         EXISTS (
@@ -140,12 +150,15 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON profiles;
 CREATE TRIGGER update_profiles_updated_at
     BEFORE UPDATE ON profiles
     FOR EACH ROW
     EXECUTE PROCEDURE update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_ideas_updated_at ON ideas;
 CREATE TRIGGER update_ideas_updated_at
     BEFORE UPDATE ON ideas
     FOR EACH ROW
     EXECUTE PROCEDURE update_updated_at_column();
+
