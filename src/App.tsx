@@ -1,32 +1,22 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider } from "@/theme/ThemeProvider";
-import Index from "./pages/Index";
+import React from 'react'
+import { Routes, Route } from 'react-router-dom'
+import AppShell from './components/layout/AppShell'
+import Dashboard from './pages/Dashboard'
 
-const queryClient = new QueryClient();
+// Simple placeholders to prevent routing errors during skeleton phase
+const IdeasPlaceholder = () => <div className="p-8 text-center text-slate-500">My Ideas Component Coming Soon</div>
+const AnalysisPlaceholder = () => <div className="p-8 text-center text-slate-500">Market Analysis Component Coming Soon</div>
+const SettingsPlaceholder = () => <div className="p-8 text-center text-slate-500">Settings Component Coming Soon</div>
 
-/**
- * Default App structure for single-page applications.
- * 
- * For multi-page apps with routing:
- * 1. Import BrowserRouter, Routes, Route from 'react-router-dom'
- * 2. Wrap content in <BrowserRouter><Routes>...</Routes></BrowserRouter>
- * 3. Add routes: <Route path="/about" element={<About />} />
- * 
- * See docs/ROUTING.md for detailed instructions.
- */
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <ThemeProvider>
-        <Index />
-      </ThemeProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
-
-export default App;
+export default function App() {
+  return (
+    <Routes>
+      <Route element={<AppShell />}>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/ideas" element={<IdeasPlaceholder />} />
+        <Route path="/analysis" element={<AnalysisPlaceholder />} />
+        <Route path="/settings" element={<SettingsPlaceholder />} />
+      </Route>
+    </Routes>
+  )
+}
